@@ -190,12 +190,14 @@ export default (trackedResources = [], firebaseConfig = {}, options = {}) => {
               reject(new Error('ID already in use'))
               return
             }
-            
-            let nextID;
+
             firebase.database().ref("nextIDs/")
               .once("value")
               .then(snapshot => {
-                nextID = (snapshot.val() && snapshot.val()[resourcesPaths[resource]]) || 1;
+                
+                let idPath = options.idPaths[resourcesPaths[resource]] || resourcesPaths[resource];
+                
+                let nextID = (snapshot.val() && snapshot.val()[idPath]) || 1;
                 newItemKey = nextID;
                 
                 const dataCreate = Object.assign(
@@ -213,7 +215,7 @@ export default (trackedResources = [], firebaseConfig = {}, options = {}) => {
                 .then(() => resolve({ data: dataCreate }))
                 .catch(reject);
                 
-                firebase.database().ref("nextIDs/" + resourcesPaths[resource]).set(++nextID);
+                firebase.database().ref("nextIDs/" + idPath).set(++nextID);
             });
             
             return
