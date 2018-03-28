@@ -191,13 +191,13 @@ export default (trackedResources = [], firebaseConfig = {}, options = {}) => {
               return
             }
 
-            firebase.database().ref("nextIDs/")
+            firebase.database().ref(resourcesPaths[resource])
+              .orderByKey()
+              .limitToLast(1)
               .once("value")
-              .then(snapshot => {
+              .then(sn => {
+                let nextID = sn.val() ? Number(Object.keys(sn.val())[0])+1 : 1;
                 
-                let idPath = options.idPaths[resourcesPaths[resource]] || resourcesPaths[resource];
-                
-                let nextID = (snapshot.val() && snapshot.val()[idPath]) || 1;
                 newItemKey = nextID;
                 
                 const dataCreate = Object.assign(
@@ -214,8 +214,6 @@ export default (trackedResources = [], firebaseConfig = {}, options = {}) => {
                 firebase.database().ref(resourcesPaths[resource] + '/' + newItemKey).update(dataCreate)
                 .then(() => resolve({ data: dataCreate }))
                 .catch(reject);
-                
-                firebase.database().ref("nextIDs/" + idPath).set(++nextID);
             });
             
             return
