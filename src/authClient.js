@@ -32,7 +32,7 @@ function handleAuthStateChange (authUser, resolve, reject) {
 
 export default (type, params) => {
 
-  if(!this.autheListener) {
+  if(!this.authListener) {
     this.authListener = firebase.auth().onAuthStateChanged(handleAuthStateChange.bind(this));
   }
 
