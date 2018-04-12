@@ -1,60 +1,59 @@
 /* globals localStorage */
 import { AUTH_LOGIN, AUTH_LOGOUT, AUTH_CHECK } from 'admin-on-rest'
-import * as firebase from 'firebase'
+import firebase from 'firebase'
 
-const authListener = null;
-
-function handleAuthStateChange (authUser, resolve, reject) {
-  if(authUser) {
-    authUser.getIdToken().then((firebaseToken) => {
-      const db = firebase.firestore();
-
-      db.collection('users').doc(authUser.uid).get()
-        .then((doc) => {
-          if (!doc.exists) {
-            if(reject) return reject(new Error('Access Denied!'))
-          }
-          const profile = doc.data()
-          if(profile &&
-            (profile.isAdmin)) {
-            localStorage.setItem('firebaseToken', firebaseToken)
-            let user = {authUser, profile, firebaseToken}
-            if(resolve) return resolve(user);
-          } else {
-            if(reject) return reject(new Error('Access Denied!'))
-          }
-        })
-    })
-  } else {
-    localStorage.removeItem('firebaseToken')
+const baseConfig = {
+  userProfilePath: '/users/',
+  userAdminProp: 'isAdmin',
+  localStorageTokenName: 'aorFirebaseClientToken',
+  handleAuthStateChange: async (auth, config) => {
+    console.log(`handleAuthStateChange`, auth)
+    if (auth) {
+      const snapshot = await firebase.database().ref(config.userProfilePath + auth.uid).once('value')
+      const profile = snapshot.val()
+      if (profile && profile[config.userAdminProp]) {
+        const firebaseToken = auth.getIdToken()
+        let user = { auth, profile, firebaseToken }
+        localStorage.setItem(config.localStorageTokenName, firebaseToken)
+        return user
+      } else {
+        firebase.auth().signOut()
+        localStorage.removeItem(config.localStorageTokenName)
+        throw new Error('Access Denied!')
+      }
+    } else {
+      localStorage.removeItem(config.localStorageTokenName)
+      throw new Error('Access Denied!')
+    }
   }
 }
 
-export default (type, params) => {
+export default (config = {}) => {
+  config = Object.assign({}, baseConfig, config)
+  firebase.auth().onAuthStateChanged(auth => config.handleAuthStateChange(auth, config).catch(() => { }))
 
-  if(!this.authListener) {
-    this.authListener = firebase.auth().onAuthStateChanged(handleAuthStateChange.bind(this));
+  return async (type, params) => {
+    if (type === AUTH_LOGOUT) {
+      config.handleAuthStateChange(null, config).catch(() => { })
+      return firebase.auth().signOut()
+    }
+    if (type === AUTH_CHECK) {
+      return new Promise((resolve, reject) => {
+        const timeout = (!firebase.auth().currentUser && localStorage.getItem(config.localStorageTokenName)) ? 1000 : 100
+        setTimeout(() => {
+          if (firebase.auth().currentUser) {
+            resolve(true)
+          } else {
+            reject(new Error('User not found'))
+          }
+        }, timeout)
+      })
+    }
+    if (type === AUTH_LOGIN) {
+      const { username, password } = params
+      const auth = await firebase.auth().signInWithEmailAndPassword(username, password)
+      return config.handleAuthStateChange(auth, config)
+    }
+    return true
   }
-
-  if (type === AUTH_LOGOUT) {
-    this.authListener();
-    localStorage.removeItem('firebaseToken')
-    return firebase.auth().signOut()
-  }
-
-  if (type === AUTH_CHECK) {
-    return localStorage.getItem('firebaseToken') ? Promise.resolve() : Promise.reject();
-  }
-
-  if (type === AUTH_LOGIN) {
-    const { username, password } = params
-
-    return new Promise((resolve, reject) => {
-      firebase.auth().signInWithEmailAndPassword(username, password)
-      .then(authUser => handleAuthStateChange(authUser, resolve, reject))
-      .catch(e => reject(new Error('User not found')))
-    })
-  }
-
-  return Promise.resolve()
 }
