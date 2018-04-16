@@ -15,36 +15,36 @@ function firebaseAuthCheck (auth, resolve, reject) {
 
           // TODO improve this! Save it on redux or something
           localStorage.setItem('firebaseToken', firebaseToken)
-          resolve(user)
+          if (resolve) resolve(user)
         })
         .catch(err => {
-          reject(err)
+          if (reject) reject(err)
         })
       } else {
         firebase.auth().signOut()
-        reject(new Error('Access Denied!'))
+        if (reject) reject(new Error('Access Denied!'))
       }
     })
     .catch(err => {
-      reject(err)
+      if (reject) reject(err)
     })
   } else {
-    reject(new Error('Login failed!'))
+    if (reject) reject(new Error('Login failed!'))
   }
 }
 
 export default (type, params) => {
+
+  if (!this.autheListener) {
+      this.authListener = firebase.auth().onAuthStateChanged(firebaseAuthCheck.bind(this));
+  }
+
   if (type === AUTH_LOGOUT) {
+    localStorage.removeItem('firebaseToken')
     return firebase.auth().signOut()
   }
   if (type === AUTH_CHECK) {
-    return new Promise((resolve, reject) => {
-      if (firebase.auth().currentUser) {
-        resolve()
-      } else {
-        reject(new Error('User not found'))
-      }
-    })
+    return localStorage.getItem('firebaseToken') ? Promise.resolve() : Promise.reject();
   }
   if (type === AUTH_LOGIN) {
     const { username, password } = params
