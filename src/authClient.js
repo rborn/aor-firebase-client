@@ -35,7 +35,7 @@ function firebaseAuthCheck (auth, resolve, reject) {
 
 export default (type, params) => {
 
-  if (!this.autheListener) {
+  if (!this.authListener) {
       this.authListener = firebase.auth().onAuthStateChanged(firebaseAuthCheck.bind(this));
   }
 
