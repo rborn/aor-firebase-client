@@ -2,6 +2,8 @@
 import { AUTH_LOGIN, AUTH_LOGOUT, AUTH_CHECK } from 'admin-on-rest'
 import firebase from 'firebase'
 
+const authListener = null;
+
 function firebaseAuthCheck (auth, resolve, reject) {
   if (auth) {
     // TODO make it a parameter
@@ -35,11 +37,12 @@ function firebaseAuthCheck (auth, resolve, reject) {
 
 export default (type, params) => {
 
-  if (!this.authListener) {
-      this.authListener = firebase.auth().onAuthStateChanged(firebaseAuthCheck.bind(this));
+  if (!authListener) {
+      authListener = firebase.auth().onAuthStateChanged(firebaseAuthCheck.bind(this));
   }
 
   if (type === AUTH_LOGOUT) {
+    authListener = null;
     localStorage.removeItem('firebaseToken')
     return firebase.auth().signOut()
   }
