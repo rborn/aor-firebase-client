@@ -9,7 +9,7 @@ import {
   CREATE,
   UPDATE,
   DELETE
-} from 'admin-on-rest'
+} from 'react-admin'
 
 /**
  * @param {string[]|Object[]} trackedResources Array of resource names or array of Objects containing name and
