@@ -29,7 +29,6 @@
   "dependencies": {
     "array-sort": "^0.1.4",
     "firebase": "^4.1.3",
-    "natural-sort-by-key": "^1.0.1",
     "react": "^15.6.1"
   },
   "devDependencies": {
