@@ -1,6 +1,6 @@
 import firebase from 'firebase'
 import arraySort from 'array-sort'
-import byKey from 'natural-sort-by-key'
+//import byKey from 'natural-sort-by-key'
 
 import {
   GET_LIST,
@@ -143,7 +143,7 @@ export default (trackedResources = [], firebaseConfig = {}, options = {}) => {
 
               if(params.sort && values[0] !== undefined) {
                 if (typeof values[0][params.sort.field] === typeof "")
-                  values.sort(byKey(params.sort.field))
+                  arraySort(values, (a, b) => a[params.sort.field].localeCompare(b[params.sort.field], undefined, {numeric:true}))
                 else
                   arraySort(values, params.sort.field)
                 if (params.sort.order !== 'ASC') values.reverse()
