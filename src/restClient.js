@@ -1,5 +1,6 @@
 import firebase from 'firebase'
 import arraySort from 'array-sort'
+import byKey from 'natural-sort-by-key'
 
 import {
   GET_LIST,
@@ -140,8 +141,12 @@ export default (trackedResources = [], firebaseConfig = {}, options = {}) => {
                 values = Object.values(resourcesData[resource])
               }
 
-              if(params.sort) {
-                arraySort(values, params.sort.field, {reverse: params.sort.order !== 'ASC'})
+              if(params.sort && values[0] !== undefined) {
+                if (typeof values[0][params.sort.field] === typeof "")
+                  values.sort(byKey(params.sort.field))
+                else
+                  arraySort(values, params.sort.field)
+                if (params.sort.order !== 'ASC') values.reverse()
               }
 
               const {page, perPage} = params.pagination
